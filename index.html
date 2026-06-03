@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Fish Feeder Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-slate-900 text-white font-sans antialiased">
+
+    <nav class="bg-slate-800 border-b border-slate-700 p-4 shadow-lg sticky top-0 z-50">
+        <div class="container mx-auto flex justify-between items-center">
+            <h1 class="text-xl font-bold text-teal-400 flex items-center gap-2">
+                <i class="fa-solid fa-fish-fins animate-bounce"></i> 
+                FishFeeder <span class="text-white font-light text-sm bg-slate-700 px-2 py-0.5 rounded">IoT</span>
+            </h1>
+            <div id="status-koneksi" class="text-xs md:text-sm bg-amber-500/20 text-amber-400 px-3 py-1 rounded-full border border-amber-500/30 font-medium">
+                <i class="fa-solid fa-circle-notch animate-spin mr-1"></i> Menghubungkan ke Alat...
+            </div>
+        </div>
+    </nav>
+
+    <main class="container mx-auto p-4 md:p-8 max-w-5xl">
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            
+            <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-xl flex items-center justify-between transition hover:border-teal-500/50 duration-300">
+                <div>
+                    <p class="text-slate-400 text-xs font-semibold uppercase tracking-wider">Sisa Volume Pakan</p>
+                    <h3 id="val-volume" class="text-4xl font-black mt-2 text-teal-400">0%</h3>
+                </div>
+                <div class="bg-teal-500/10 p-4 rounded-xl border border-teal-500/20 text-teal-400">
+                    <i class="fa-solid fa-fill-drip text-3xl"></i>
+                </div>
+            </div>
+
+            <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-xl flex items-center justify-between transition hover:border-blue-500/50 duration-300">
+                <div>
+                    <p class="text-slate-400 text-xs font-semibold uppercase tracking-wider">Kelembapan Wadah</p>
+                    <h3 id="val-kelembapan" class="text-4xl font-black mt-2 text-blue-400">0%</h3>
+                </div>
+                <div class="bg-blue-500/10 p-4 rounded-xl border border-blue-500/20 text-blue-400">
+                    <i class="fa-solid fa-droplet text-3xl"></i>
+                </div>
+            </div>
+
+            <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-xl flex flex-col justify-center">
+                <p class="text-slate-400 text-xs font-semibold uppercase tracking-wider mb-3">Kontrol Manual Katup</p>
+                <button onclick="beriPakan()" id="btn-servo" class="w-full bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white font-bold py-3.5 px-4 rounded-xl shadow-lg transition duration-200 transform active:scale-95 flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-utensils"></i> Beri Pakan Sekarang
+                </button>
+            </div>
+
+        </div>
+
+        <div class="bg-slate-800 p-5 md:p-6 rounded-2xl border border-slate-700 shadow-xl">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-base md:text-lg font-bold text-slate-300">
+                    <i class="fa-solid fa-chart-line mr-2 text-teal-400"></i>Grafik Monitoring Real-Time
+                </h3>
+                <span class="text-xs text-slate-500 bg-slate-900 px-2 py-1 rounded">Update: Tiap 3 Detik</span>
+            </div>
+            <div class="relative h-64 md:h-80 w-full">
+                <canvas id="iotChart"></canvas>
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+        // ================= KONTROL UTAMA AMBIL DARI BLYNK =================
+        const BLYNK_TOKEN = "M9tF9T0A8oG40ZARYeRdMbiZdQ2-5pAO"; // Token Anda berhasil dimasukkan di sini
+        const BLYNK_URL = "https://blynk.cloud/external/api"; // URL Universal Blynk Cloud
+
+        // Inisialisasi Grafik Menggunakan Chart.js
+        const ctx = document.getElementById('iotChart').getContext('2d');
+        const iotChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: [], // Menyimpan data waktu (Jam:Menit:Detik)
+                datasets: [
+                    {
+                        label: 'Volume Pakan (%)',
+                        data: [],
+                        borderColor: '#2dd4bf', // Teal
+                        backgroundColor: 'rgba(45, 212, 191, 0.05)',
+                        borderWidth: 3,
+                        tension: 0.3,
+                        fill: true
+                    },
+                    {
+                        label: 'Kelembapan Wadah (%)',
+                        data: [],
+                        borderColor: '#60a5fa', // Blue
+                        backgroundColor: 'rgba(96, 165, 250, 0.05)',
+                        borderWidth: 3,
+                        tension: 0.3,
+                        fill: true
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: { 
+                        min: 0, 
+                        max: 100, 
+                        grid: { color: '#334155' },
+                        ticks: { color: '#94a3b8' }
+                    },
+                    x: { 
+                        grid: { color: '#334155' },
+                        ticks: { color: '#94a3b8' }
+                    }
+                },
+                plugins: {
+                    legend: { 
+                        labels: { color: '#f1f5f9', font: { weight: 'bold' } } 
+                    }
+                }
+            }
+        });
+
+        // Fungsi Ambil Data Sensor (V1 & V2) secara Real-Time via API Blynk
+        async function fetchBlynkData() {
+            try {
+                // Request paralel ke Blynk Cloud
+                const [resKelembapan, resVolume] = await Promise.all([
+                    fetch(`${BLYNK_URL}/get?token=${BLYNK_TOKEN}&V1`),
+                    fetch(`${BLYNK_URL}/get?token=${BLYNK_TOKEN}&V2`)
+                ]);
+                
+                const kelembapan = parseFloat(await resKelembapan.text());
+                const volume = parseInt(await resVolume.text());
+
+                // Validasi data dan update element teks di halaman web
+                if (!isNaN(kelembapan)) document.getElementById('val-kelembapan').innerText = kelembapan.toFixed(1) + "%";
+                if (!isNaN(volume)) document.getElementById('val-volume').innerText = volume + "%";
+
+                // Dapatkan penanda waktu lokal saat ini
+                const waktuSekarang = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                
+                // Batasi jumlah titik data di grafik (Maksimal 8 data terakhir agar tidak menumpuk di HP)
+                if (iotChart.data.labels.length > 8) { 
+                    iotChart.data.labels.shift();
+                    iotChart.data.datasets[0].data.shift();
+                    iotChart.data.datasets[1].data.shift();
+                }
+
+                // Tambahkan data baru ke dalam grafik
+                iotChart.data.labels.push(waktuSekarang);
+                iotChart.data.datasets[0].data.push(volume);
+                iotChart.data.datasets[1].data.push(kelembapan);
+                iotChart.update();
+
+                // Perbarui status koneksi menjadi hijau (Aktif)
+                document.getElementById('status-koneksi').innerHTML = '<i class="fa-solid fa-circle text-xs mr-1 animate-pulse"></i> Berhasil Sinkron';
+                document.getElementById('status-koneksi').className = "text-sm bg-emerald-500/20 text-emerald-400 px-3 py-1 rounded-full border border-emerald-500/30 font-medium";
+
+            } catch (error) {
+                console.error("Gagal mengambil data Blynk API:", error);
+                // Perbarui status koneksi jika gagal terhubung ke internet/Blynk
+                document.getElementById('status-koneksi').innerHTML = '<i class="fa-solid fa-circle-exclamation text-xs mr-1"></i> Putus Koneksi';
+                document.getElementById('status-koneksi').className = "text-sm bg-rose-500/20 text-rose-400 px-3 py-1 rounded-full border border-rose-500/30 font-medium";
+            }
+        }
+
+        // Fungsi Kirim Perintah ke Virtual Pin V3 (Menggerakkan Servo)
+        async function beriPakan() {
+            const btn = document.getElementById('btn-servo');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-circle-notch animate-spin"></i> Memproses Alat...';
+
+            try {
+                // Mengirim perintah nilai 1 ke Virtual Pin V3
+                await fetch(`${BLYNK_URL}/update?token=${BLYNK_TOKEN}&V3=1`);
+                
+                // Alert konfirmasi sukses
+                alert("Perintah sukses dikirim! Katup pakan terbuka.");
+                
+                // Kunci tombol selama 3 detik untuk memberi jeda proses mekanis servo menutup kembali
+                setTimeout(() => {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fa-solid fa-utensils"></i> Beri Pakan Sekarang';
+                }, 3000);
+
+            } catch (error) {
+                alert("Gagal mengirim sinyal kontrol ke alat. Coba cek koneksi internet.");
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-solid fa-utensils"></i> Beri Pakan Sekarang';
+            }
+        }
+
+        // Atur agar fungsi penarik data berjalan otomatis setiap 3 detik
+        setInterval(fetchBlynkData, 3000);
+        // Jalankan sekali di awal saat halaman web pertama kali dimuat
+        fetchBlynkData();
+    </script>
+</body>
+</html>
