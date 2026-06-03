@@ -14,7 +14,7 @@
         <div class="container mx-auto flex justify-between items-center">
             <h1 class="text-xl font-bold text-teal-400 flex items-center gap-2">
                 <i class="fa-solid fa-fish-fins animate-bounce"></i> 
-                FishFeeder <span class="text-white font-light text-sm bg-slate-700 px-2 py-0.5 rounded">IoT</span>
+                FishFeeder <span class="text-white font-light text-sm bg-slate-700 px-2 py-0.5 rounded">RTC</span>
             </h1>
             <div id="status-koneksi" class="text-xs md:text-sm bg-amber-500/20 text-amber-400 px-3 py-1 rounded-full border border-amber-500/30 font-medium">
                 <i class="fa-solid fa-circle-notch animate-spin mr-1"></i> Menghubungkan...
@@ -25,79 +25,63 @@
     <main class="container mx-auto p-4 md:p-8 max-w-5xl">
         
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            
-            <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-xl flex items-center justify-between transition hover:border-teal-500/50 duration-300">
+            <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-xl flex items-center justify-between">
                 <div>
                     <p class="text-slate-400 text-xs font-semibold uppercase tracking-wider">Kapasitas Sisa Pakan</p>
                     <h3 id="val-volume" class="text-4xl font-black mt-2 text-teal-400">0%</h3>
                     <p id="val-jarak-raw" class="text-xs text-slate-500 mt-1">Jarak: 0 cm</p>
                 </div>
-                <div class="bg-teal-500/10 p-4 rounded-xl border border-teal-500/20 text-teal-400">
-                    <i class="fa-solid fa-fill-drip text-3xl"></i>
-                </div>
+                <div class="bg-teal-500/10 p-4 rounded-xl text-teal-400"><i class="fa-solid fa-fill-drip text-3xl"></i></div>
             </div>
 
-            <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-xl flex items-center justify-between transition hover:border-blue-500/50 duration-300">
+            <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-xl flex items-center justify-between">
                 <div>
                     <p class="text-slate-400 text-xs font-semibold uppercase tracking-wider">Suhu Sekitar Wadah</p>
                     <h3 id="val-kelembapan" class="text-4xl font-black mt-2 text-blue-400">0°C</h3>
                 </div>
-                <div class="bg-blue-500/10 p-4 rounded-xl border border-blue-500/20 text-blue-400">
-                    <i class="fa-solid fa-temperature-half text-3xl"></i>
-                </div>
+                <div class="bg-blue-500/10 p-4 rounded-xl text-blue-400"><i class="fa-solid fa-temperature-half text-3xl"></i></div>
             </div>
 
             <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-xl flex flex-col justify-between">
                 <div>
-                    <p class="text-slate-400 text-xs font-semibold uppercase tracking-wider mb-1">Kontrol Manual Katup</p>
+                    <p class="text-slate-400 text-xs font-semibold uppercase tracking-wider mb-1">Set Durasi Buka Katup</p>
                     <div class="flex justify-between items-center mb-2">
-                        <label class="text-xs text-slate-400">Durasi Buka:</label>
+                        <label class="text-xs text-slate-400">Waktu Buka:</label>
                         <span id="label-durasi-manual" class="text-xs font-bold text-amber-400">2 Detik</span>
                     </div>
-                    <input type="range" id="slider-durasi-manual" min="1" max="10" value="2" oninput="updateLabelDurasi()" class="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-amber-500 mb-4">
+                    <input type="range" id="slider-durasi-manual" min="1" max="10" value="2" oninput="updateDurasiCloud()" class="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-amber-500 mb-4">
                 </div>
-                <button onclick="eksekusiPakarServo(document.getElementById('slider-durasi-manual').value, 'Manual')" id="btn-servo" class="w-full bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white font-bold py-3 px-4 rounded-xl shadow-lg transition duration-200 transform active:scale-95 flex items-center justify-center gap-2">
+                <button onclick="beriPakanManual()" id="btn-servo" class="w-full bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white font-bold py-3 px-4 rounded-xl shadow-md flex items-center justify-center gap-2">
                     <i class="fa-solid fa-utensils"></i> Beri Pakan Sekarang
                 </button>
             </div>
-
         </div>
 
-        <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-xl mb-8">
-            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6 border-b border-slate-700 pb-4">
-                <div>
-                    <h3 class="text-lg font-bold text-slate-200 flex items-center gap-2">
-                        <i class="fa-regular fa-calendar-check text-teal-400"></i> JADWAL OTOMATIS
-                    </h3>
-                    <p class="text-xs text-slate-500 mt-1">Jadwal tersimpan di browser - Servo aktif via V0 saat jadwal tiba</p>
-                </div>
-                <div class="flex flex-wrap items-center gap-3 bg-slate-900/60 p-3 rounded-xl border border-slate-700/50 w-full md:w-auto">
-                    <input type="time" id="new-time" class="bg-slate-800 border border-slate-700 rounded-lg px-2 py-1.5 text-sm font-semibold text-white focus:outline-none focus:border-teal-400">
-                    <div class="flex items-center gap-1.5">
-                        <input type="number" id="new-duration" min="1" max="10" value="3" class="w-14 bg-slate-800 border border-slate-700 rounded-lg px-2 py-1.5 text-sm font-semibold text-center text-white focus:outline-none focus:border-teal-400">
-                        <span class="text-xs text-slate-400">detik</span>
-                    </div>
-                    <button onclick="tambahJadwalBaru()" class="bg-teal-500 hover:bg-teal-600 text-slate-900 font-bold text-xs px-3 py-2 rounded-lg transition flex items-center gap-1">
-                        <i class="fa-solid fa-plus"></i> Tambah Jadwal
-                    </button>
-                </div>
-            </div>
-
-            <div id="container-daftar-jadwal" class="space-y-3">
-                <div class="text-center text-sm text-slate-500 py-4">Belum ada jadwal pakan yang dikonfigurasi.</div>
-            </div>
-        </div>
-
-        <div class="bg-slate-800 p-5 md:p-6 rounded-2xl border border-slate-700 shadow-xl">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="text-base md:text-lg font-bold text-slate-300">
-                    <i class="fa-solid fa-chart-line mr-2 text-teal-400"></i>Grafik Monitoring Real-Time
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-xl">
+                <h3 class="text-base font-bold text-slate-300 mb-4 flex items-center gap-2">
+                    <i class="fa-regular fa-clock text-teal-400"></i> Atur Jadwal Utama 1 (V6)
                 </h3>
-                <span class="text-xs text-slate-500 bg-slate-900 px-2 py-1 rounded">Update: Tiap 3 Detik</span>
+                <div class="flex gap-3">
+                    <input type="time" id="input-jadwal1" class="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-white text-center font-semibold focus:outline-none focus:border-teal-400">
+                    <button onclick="simpanJadwalBlynk('V6', 'input-jadwal1')" class="bg-teal-500 hover:bg-teal-600 text-slate-900 font-bold px-4 rounded-xl text-sm transition">Simpan 1</button>
+                </div>
             </div>
-            <div class="relative h-64 md:h-80 w-full">
-                <canvas id="iotChart"></canvas>
+
+            <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-xl">
+                <h3 class="text-base font-bold text-slate-300 mb-4 flex items-center gap-2">
+                    <i class="fa-regular fa-clock text-blue-400"></i> Atur Jadwal Utama 2 (V7)
+                </h3>
+                <div class="flex gap-3">
+                    <input type="time" id="input-jadwal2" class="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-white text-center font-semibold focus:outline-none focus:border-blue-400">
+                    <button onclick="simpanJadwalBlynk('V7', 'input-jadwal2')" class="bg-blue-500 hover:bg-blue-600 text-white font-bold px-4 rounded-xl text-sm transition">Simpan 2</button>
+                </div>
             </div>
+        </div>
+
+        <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-xl">
+            <h3 class="text-base font-bold text-slate-300 mb-4"><i class="fa-solid fa-chart-line mr-2 text-teal-400"></i>Grafik Tren Real-Time</h3>
+            <div class="relative h-64 w-full"><canvas id="iotChart"></canvas></div>
         </div>
 
     </main>
@@ -106,11 +90,42 @@
         const BLYNK_TOKEN = "M9tF9T0A8oG40ZARYeRdMbiZdQ2-5pAO"; 
         const BLYNK_URL = "https://blynk.cloud/external/api"; 
 
-        let daftarJadwal = [];
-
-        function updateLabelDurasi() {
+        // Update nilai durasi geser ke V4 di Cloud Blynk
+        async function updateDurasiCloud() {
             const val = document.getElementById('slider-durasi-manual').value;
             document.getElementById('label-durasi-manual').innerText = val + " Detik";
+            try {
+                await fetch(`${BLYNK_URL}/update?token=${BLYNK_TOKEN}&V4=${val}`);
+            } catch(e) { console.log("Gagal sinkron durasi."); }
+        }
+
+        // Kirim set waktu pakan ke Pin V6 / V7 Blynk
+        async function simpanJadwalBlynk(vPin, inputId) {
+            const timeVal = document.getElementById(inputId).value;
+            if(!timeVal) { alert("Pilih jam terlebih dahulu!"); return; }
+            try {
+                const formatTime = `${timeVal}:00`;
+                await fetch(`${BLYNK_URL}/update?token=${BLYNK_TOKEN}&${vPin}=${encodeURIComponent(formatTime)}`);
+                alert(`Sukses! Jadwal ${vPin} diperbarui ke jam ${timeVal}.`);
+            } catch(e) { alert("Gagal mengupdate jadwal Blynk."); }
+        }
+
+        // Pemicu pakan manual via V0
+        async function beriPakanManual() {
+            const btn = document.getElementById('btn-servo');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-circle-notch animate-spin"></i> Memicu Alat...';
+            try {
+                await fetch(`${BLYNK_URL}/update?token=${BLYNK_TOKEN}&V0=1`);
+                setTimeout(() => {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fa-solid fa-utensils"></i> Beri Pakan Sekarang';
+                }, 3000);
+            } catch(e) { 
+                alert("Gagal terhubung.");
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-solid fa-utensils"></i> Beri Pakan Sekarang';
+            }
         }
 
         // Inisialisasi Grafik Chart.js
@@ -130,19 +145,17 @@
                 scales: {
                     y: { min: 0, max: 100, grid: { color: '#334155' }, ticks: { color: '#94a3b8' } },
                     x: { grid: { color: '#334155' }, ticks: { color: '#94a3b8' } }
-                },
-                plugins: { legend: { labels: { color: '#f1f5f9', font: { weight: 'bold' } } } }
+                }
             }
         });
 
-        // Ambil Data Sensor Real-Time via API Blynk
+        // Ambil Data Sensor Berkala
         async function fetchBlynkData() {
             try {
                 const [resSuhu, resJarak] = await Promise.all([
                     fetch(`${BLYNK_URL}/get?token=${BLYNK_TOKEN}&V1`),
                     fetch(`${BLYNK_URL}/get?token=${BLYNK_TOKEN}&V3`)
                 ]);
-                
                 const suhuVal = parseFloat(await resSuhu.text());
                 const jarakRaw = parseFloat(await resJarak.text());
 
@@ -170,152 +183,36 @@
 
                 document.getElementById('status-koneksi').innerHTML = '<i class="fa-solid fa-circle text-xs mr-1 animate-pulse"></i> Berhasil Sinkron';
                 document.getElementById('status-koneksi').className = "text-sm bg-emerald-500/20 text-emerald-400 px-3 py-1 rounded-full border border-emerald-500/30 font-medium";
-
-            } catch (error) {
+            } catch (e) {
                 document.getElementById('status-koneksi').innerHTML = '<i class="fa-solid fa-circle-exclamation text-xs mr-1"></i> Putus Koneksi';
                 document.getElementById('status-koneksi').className = "text-sm bg-rose-500/20 text-rose-400 px-3 py-1 rounded-full border border-rose-500/30 font-medium";
             }
         }
 
-        // --- ENGINE MANAGEMENT JADWAL ---
-        function loadJadwalDariStorage() {
-            const dataLokal = localStorage.getItem('fishFeeder_Schedules');
-            if (dataLokal) {
-                daftarJadwal = JSON.parse(dataLokal);
-                daftarJadwal.forEach(j => j.sudahTerpancing = false);
-            }
-            renderDaftarJadwalKeLayar();
-        }
-
-        function simpanJadwalKeStorage() {
-            localStorage.setItem('fishFeeder_Schedules', JSON.stringify(daftarJadwal));
-            renderDaftarJadwalKeLayar();
-        }
-
-        function tambahJadwalBaru() {
-            const timeVal = document.getElementById('new-time').value;
-            const durationVal = parseInt(document.getElementById('new-duration').value);
-
-            if (!timeVal || isNaN(durationVal) || durationVal < 1) {
-                alert("Mohon tentukan waktu dan durasi detik pakan dengan benar!");
-                return;
-            }
-
-            const jadwalBaru = {
-                id: Date.now(),
-                waktu: timeVal,
-                durasi: durationVal,
-                statusAktif: true,
-                sudahTerpancing: false
-            };
-
-            daftarJadwal.push(jadwalBaru);
-            daftarJadwal.sort((a, b) => a.waktu.localeCompare(b.waktu));
-            simpanJadwalKeStorage();
-            document.getElementById('new-time').value = "";
-        }
-
-        function toggleStatusJadwal(id) {
-            const index = daftarJadwal.findIndex(j => j.id === id);
-            if (index !== -1) {
-                daftarJadwal[index].statusAktif = !daftarJadwal[index].statusAktif;
-                daftarJadwal[index].sudahTerpancing = false; 
-                simpanJadwalKeStorage();
-            }
-        }
-
-        function hapusJadwal(id) {
-            if (confirm("Hapus jadwal pakan ini?")) {
-                daftarJadwal = daftarJadwal.filter(j => j.id !== id);
-                simpanJadwalKeStorage();
-            }
-        }
-
-        function renderDaftarJadwalKeLayar() {
-            const container = document.getElementById('container-daftar-jadwal');
-            if (daftarJadwal.length === 0) {
-                container.innerHTML = `<div class="text-center text-sm text-slate-500 py-6 border border-dashed border-slate-700/60 rounded-xl">Belum ada jadwal pakan otomatis.</div>`;
-                return;
-            }
-
-            let htmlTeks = "";
-            daftarJadwal.forEach(j => {
-                const isChecked = j.statusAktif ? 'checked' : '';
-                const styleTeksRedup = j.statusAktif ? 'text-white' : 'text-slate-500 line-through';
-                
-                htmlTeks += `
-                    <div class="flex items-center justify-between bg-slate-900/50 border border-slate-700/60 p-4 rounded-xl shadow-sm transition hover:bg-slate-900 duration-200">
-                        <div class="flex items-center gap-6">
-                            <div class="text-2xl font-mono font-bold tracking-wider ${styleTeksRedup}">${j.waktu}</div>
-                            <div class="text-xs text-slate-400 font-medium">Durasi: <span class="text-teal-400 font-bold font-mono">${j.durasi}</span> detik</div>
-                        </div>
-                        <div class="flex items-center gap-4">
-                            <label class="relative inline-flex items-center cursor-pointer select-none">
-                                <input type="checkbox" class="sr-only peer" ${isChecked} onchange="toggleStatusJadwal(${j.id})">
-                                <div class="w-11 h-6 bg-slate-700 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-teal-400"></div>
-                            </label>
-                            <button onclick="hapusJadwal(${j.id})" class="text-slate-500 hover:text-rose-500 transition text-sm">
-                                <i class="fa-solid fa-xmark"></i>
-                            </button>
-                        </div>
-                    </div>
-                `;
-            });
-            container.innerHTML = htmlTeks;
-        }
-
-        // --- EKSEKUSI PERINTAH ROBOTIK VIA V0 ---
-        async function eksekusiPakarServo(durasiDetik, sumber) {
-            const btn = document.getElementById('btn-servo');
-            if (sumber === "Manual") {
-                btn.disabled = true;
-                btn.innerHTML = '<i class="fa-solid fa-circle-notch animate-spin"></i> Memproses...';
-            }
-
+        // Ambil nilai konfigurasi awal dari cloud
+        async function loadDataAwal() {
             try {
-                // 1. Kirim V0=1 untuk BUKA servo + Bunyikan Buzzer
-                await fetch(`${BLYNK_URL}/update?token=${BLYNK_TOKEN}&V0=1`);
+                const [resV6, resV7, resV4] = await Promise.all([
+                    fetch(`${BLYNK_URL}/get?token=${BLYNK_TOKEN}&V6`),
+                    fetch(`${BLYNK_URL}/get?token=${BLYNK_TOKEN}&V7`),
+                    fetch(`${BLYNK_URL}/get?token=${BLYNK_TOKEN}&V4`)
+                ]);
+                const t1 = await resV6.text();
+                const t2 = await resV7.text();
+                const dManual = await resV4.text();
                 
-                // Tahan selama durasi detik yang diinginkan
-                await new Promise(resolve => setTimeout(resolve, durasiDetik * 1000));
-                
-                // 2. Kirim V0=0 untuk TUTUP servo rapat-rapat
-                await fetch(`${BLYNK_URL}/update?token=${BLYNK_TOKEN}&V0=0`);
-                
-                if (sumber === "Manual") alert("Pakan manual berhasil dijatuhkan!");
-            } catch (error) {
-                if (sumber === "Manual") alert("Koneksi bermasalah. Gagal mengontrol alat.");
-            } finally {
-                if (sumber === "Manual") {
-                    btn.disabled = false;
-                    btn.innerHTML = '<i class="fa-solid fa-utensils"></i> Beri Pakan Sekarang';
+                if(t1 && t1.includes(":")) document.getElementById('input-jadwal1').value = t1.trim().substring(0,5);
+                if(t2 && t2.includes(":")) document.getElementById('input-jadwal2').value = t2.trim().substring(0,5);
+                if(dManual && !isNaN(dManual)) {
+                    document.getElementById('slider-durasi-manual').value = parseInt(dManual);
+                    document.getElementById('label-durasi-manual').innerText = dManual + " Detik";
                 }
-            }
-        }
-
-        // Background Checker Jam Dinding (Cek kecocokan waktu tiap detik)
-        function backgroundTimeChecker() {
-            const sekarang = new Date();
-            const jamMenitSekarang = sekarang.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
-            const detikSekarang = toggleStatusJadwal.getSeconds;
-
-            if (jamMenitSekarang === "00:00" && sekarang.getSeconds() === 0) {
-                daftarJadwal.forEach(j => j.sudahTerpancing = false);
-            }
-
-            daftarJadwal.forEach(j => {
-                if (j.statusAktif && j.waktu === jamMenitSekarang && !j.sudahTerpancing) {
-                    j.sudahTerpancing = true; 
-                    eksekusiPakarServo(j.durasi, `Jadwal Otomatis ${j.waktu}`);
-                }
-            });
+            } catch(e) { console.log("Gagal mengambil data awal."); }
         }
 
         setInterval(fetchBlynkData, 3000);
-        setInterval(backgroundTimeChecker, 1000);
-        
         fetchBlynkData();
-        loadJadwalDariStorage();
+        loadDataAwal();
     </script>
 </body>
 </html>
