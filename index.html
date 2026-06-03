@@ -1,435 +1,691 @@
 <!DOCTYPE html>
+
 <html lang="id">
+
 <head>
+
     <meta charset="UTF-8">
+
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <title>Smart Fish Feeder Dashboard</title>
+
     <script src="https://cdn.tailwindcss.com"></script>
+
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
 </head>
+
 <body class="bg-slate-900 text-white font-sans antialiased">
 
+
+
     <nav class="bg-slate-800 border-b border-slate-700 p-4 shadow-lg sticky top-0 z-50">
+
         <div class="container mx-auto flex justify-between items-center">
+
             <h1 class="text-xl font-bold text-teal-400 flex items-center gap-2">
+
                 <i class="fa-solid fa-fish-fins animate-bounce"></i> 
+
                 FishFeeder <span class="text-white font-light text-sm bg-slate-700 px-2 py-0.5 rounded">IoT</span>
+
             </h1>
+
             <div id="status-koneksi" class="text-xs md:text-sm bg-amber-500/20 text-amber-400 px-3 py-1 rounded-full border border-amber-500/30 font-medium">
+
                 <i class="fa-solid fa-circle-notch animate-spin mr-1"></i> Menghubungkan...
+
             </div>
+
         </div>
+
     </nav>
 
-    <main class="container mx-auto p-4 md:p-8 max-w-5xl space-y-8">
+
+
+    <main class="container mx-auto p-4 md:p-8 max-w-5xl">
+
         
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+
             
+
             <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-xl flex items-center justify-between transition hover:border-teal-500/50 duration-300">
+
                 <div>
+
                     <p class="text-slate-400 text-xs font-semibold uppercase tracking-wider">Kapasitas Sisa Pakan</p>
+
                     <h3 id="val-volume" class="text-4xl font-black mt-2 text-teal-400">0%</h3>
+
                     <p id="val-jarak-raw" class="text-xs text-slate-500 mt-1">Jarak: 0 cm</p>
+
                 </div>
+
                 <div class="bg-teal-500/10 p-4 rounded-xl border border-teal-500/20 text-teal-400">
+
                     <i class="fa-solid fa-fill-drip text-3xl"></i>
+
                 </div>
+
             </div>
+
+
 
             <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-xl flex items-center justify-between transition hover:border-blue-500/50 duration-300">
+
                 <div>
+
                     <p class="text-slate-400 text-xs font-semibold uppercase tracking-wider">Suhu Sekitar Wadah</p>
+
                     <h3 id="val-kelembapan" class="text-4xl font-black mt-2 text-blue-400">0°C</h3>
+
                 </div>
+
                 <div class="bg-blue-500/10 p-4 rounded-xl border border-blue-500/20 text-blue-400">
+
                     <i class="fa-solid fa-temperature-half text-3xl"></i>
+
                 </div>
+
             </div>
+
+
 
             <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-xl flex flex-col justify-between">
+
                 <div>
+
                     <p class="text-slate-400 text-xs font-semibold uppercase tracking-wider mb-1">Kontrol Manual Katup</p>
+
                     <div class="flex justify-between items-center mb-2">
+
                         <label class="text-xs text-slate-400">Durasi Buka:</label>
+
                         <span id="label-durasi-manual" class="text-xs font-bold text-amber-400">2 Detik</span>
+
                     </div>
+
                     <input type="range" id="slider-durasi-manual" min="1" max="10" value="2" oninput="updateLabelDurasi()" class="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-amber-500 mb-4">
+
                 </div>
+
                 <button onclick="eksekusiPakarServo(document.getElementById('slider-durasi-manual').value, 'Manual')" id="btn-servo" class="w-full bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white font-bold py-3 px-4 rounded-xl shadow-lg transition duration-200 transform active:scale-95 flex items-center justify-center gap-2">
+
                     <i class="fa-solid fa-utensils"></i> Beri Pakan Sekarang
+
                 </button>
+
             </div>
+
+
 
         </div>
 
-        <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-xl">
+
+
+        <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-xl mb-8">
+
             <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6 border-b border-slate-700 pb-4">
+
                 <div>
+
                     <h3 class="text-lg font-bold text-slate-200 flex items-center gap-2">
+
                         <i class="fa-regular fa-calendar-check text-teal-400"></i> JADWAL OTOMATIS
+
                     </h3>
+
                     <p class="text-xs text-slate-500 mt-1">Jadwal tersimpan di browser - Servo aktif via V0 saat jadwal tiba</p>
+
                 </div>
+
                 <div class="flex flex-wrap items-center gap-3 bg-slate-900/60 p-3 rounded-xl border border-slate-700/50 w-full md:w-auto">
+
                     <input type="time" id="new-time" class="bg-slate-800 border border-slate-700 rounded-lg px-2 py-1.5 text-sm font-semibold text-white focus:outline-none focus:border-teal-400">
+
                     <div class="flex items-center gap-1.5">
+
                         <input type="number" id="new-duration" min="1" max="10" value="3" class="w-14 bg-slate-800 border border-slate-700 rounded-lg px-2 py-1.5 text-sm font-semibold text-center text-white focus:outline-none focus:border-teal-400">
+
                         <span class="text-xs text-slate-400">detik</span>
+
                     </div>
+
                     <button onclick="tambahJadwalBaru()" class="bg-teal-500 hover:bg-teal-600 text-slate-900 font-bold text-xs px-3 py-2 rounded-lg transition flex items-center gap-1">
+
                         <i class="fa-solid fa-plus"></i> Tambah Jadwal
+
                     </button>
+
                 </div>
+
             </div>
+
+
 
             <div id="container-daftar-jadwal" class="space-y-3">
+
                 <div class="text-center text-sm text-slate-500 py-4">Belum ada jadwal pakan yang dikonfigurasi.</div>
+
             </div>
+
         </div>
 
-        <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-xl">
-            <div class="flex justify-between items-center mb-4 border-b border-slate-700 pb-4">
-                <div>
-                    <h3 class="text-lg font-bold text-slate-200 flex items-center gap-2">
-                        <i class="fa-solid fa-clock-rotate-left text-amber-400"></i> RIWAYAT PEMBERIAN PAKAN
-                    </h3>
-                    <p class="text-xs text-slate-500 mt-1">Mencatat aktivitas pelontaran pakan ikan terhitung dari perangkat ini</p>
-                </div>
-                <button onclick="bersihkanRiwayat()" class="text-xs bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 px-3 py-1.5 rounded-lg transition flex items-center gap-1.5">
-                    <i class="fa-solid fa-trash-can"></i> Hapus Semua Log
-                </button>
-            </div>
-            
-            <div class="overflow-x-auto max-h-60 overflow-y-auto border border-slate-700 rounded-xl bg-slate-900/40">
-                <table class="w-full text-left border-collapse">
-                    <thead>
-                        <tr class="bg-slate-900 border-b border-slate-700 text-xs font-semibold uppercase tracking-wider text-slate-400">
-                            <th class="p-3">Waktu & Tanggal</th>
-                            <th class="p-3">Metode/Pemicu</th>
-                            <th class="p-3 text-center">Durasi</th>
-                        </tr>
-                    </thead>
-                    <tbody id="container-riwayat-log" class="text-sm divide-y divide-slate-800">
-                        <tr>
-                            <td colspan="3" class="text-center text-slate-500 py-6">Belum ada riwayat aktivitas pakan.</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
+
 
         <div class="bg-slate-800 p-5 md:p-6 rounded-2xl border border-slate-700 shadow-xl">
+
             <div class="flex justify-between items-center mb-4">
+
                 <h3 class="text-base md:text-lg font-bold text-slate-300">
+
                     <i class="fa-solid fa-chart-line mr-2 text-teal-400"></i>Grafik Monitoring Real-Time
+
                 </h3>
+
                 <span class="text-xs text-slate-500 bg-slate-900 px-2 py-1 rounded">Update: Tiap 3 Detik</span>
+
             </div>
+
             <div class="relative h-64 md:h-80 w-full">
+
                 <canvas id="iotChart"></canvas>
+
             </div>
+
         </div>
+
+
 
     </main>
 
+
+
     <script>
+
         const BLYNK_TOKEN = "M9tF9T0A8oG40ZARYeRdMbiZdQ2-5pAO"; 
+
         const BLYNK_URL = "https://blynk.cloud/external/api"; 
 
+
+
+        // Array penampung seluruh jadwal pakan
+
         let daftarJadwal = [];
-        let daftarRiwayat = []; // Array penampung riwayat aktivitas
+
+
 
         function updateLabelDurasi() {
+
             const val = document.getElementById('slider-durasi-manual').value;
+
             document.getElementById('label-durasi-manual').innerText = val + " Detik";
+
         }
+
+
 
         // Inisialisasi Grafik Chart.js
+
         const ctx = document.getElementById('iotChart').getContext('2d');
+
         const iotChart = new Chart(ctx, {
+
             type: 'line',
+
             data: {
+
                 labels: [], 
+
                 datasets: [
+
                     { label: 'Sisa Pakan (%)', data: [], borderColor: '#2dd4bf', backgroundColor: 'rgba(45, 212, 191, 0.05)', borderWidth: 3, tension: 0.3, fill: true },
+
                     { label: 'Suhu Wadah (°C)', data: [], borderColor: '#60a5fa', backgroundColor: 'rgba(96, 165, 250, 0.05)', borderWidth: 3, tension: 0.3, fill: true }
+
                 ]
+
             },
+
             options: {
+
                 responsive: true,
+
                 maintainAspectRatio: false,
+
                 scales: {
+
                     y: { min: 0, max: 100, grid: { color: '#334155' }, ticks: { color: '#94a3b8' } },
+
                     x: { grid: { color: '#334155' }, ticks: { color: '#94a3b8' } }
-                ],
+
+                },
+
                 plugins: { legend: { labels: { color: '#f1f5f9', font: { weight: 'bold' } } } }
+
             }
+
         });
 
+
+
         // Ambil Data Sensor via API Blynk
+
         async function fetchBlynkData() {
+
             try {
+
                 const [resSuhu, resJarak] = await Promise.all([
+
                     fetch(`${BLYNK_URL}/get?token=${BLYNK_TOKEN}&V1`),
+
                     fetch(`${BLYNK_URL}/get?token=${BLYNK_TOKEN}&V3`)
+
                 ]);
+
                 
+
                 const suhuVal = parseFloat(await resSuhu.text());
+
                 const jarakRaw = parseFloat(await resJarak.text());
 
+
+
                 const tinggiMaksimalWadah = 30; 
+
                 let sisaPakanPersen = ((tinggiMaksimalWadah - jarakRaw) / tinggiMaksimalWadah) * 100;
+
                 if (sisaPakanPersen > 100) sisaPakanPersen = 100;
+
                 if (sisaPakanPersen < 0 || isNaN(sisaPakanPersen)) sisaPakanPersen = 0;
 
-                if (!isnan(suhuVal)) document.getElementById('val-kelembapan').innerText = suhuVal.toFixed(1) + "°C";
-                if (!isnan(jarakRaw)) {
+
+
+                if (!isNaN(suhuVal)) document.getElementById('val-kelembapan').innerText = suhuVal.toFixed(1) + "°C";
+
+                if (!isNaN(jarakRaw)) {
+
                     document.getElementById('val-volume').innerText = Math.round(sisaPakanPersen) + "%";
+
                     document.getElementById('val-jarak-raw').innerText = `Jarak: ${jarakRaw} cm`;
+
                 }
+
+
 
                 const waktuSekarang = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
                 if (iotChart.data.labels.length > 8) { 
+
                     iotChart.data.labels.shift();
+
                     iotChart.data.datasets[0].data.shift();
+
                     iotChart.data.datasets[1].data.shift();
+
                 }
+
                 iotChart.data.labels.push(waktuSekarang);
+
                 iotChart.data.datasets[0].data.push(Math.round(sisaPakanPersen));
+
                 iotChart.data.datasets[1].data.push(suhuVal || 0);
+
                 iotChart.update();
 
+
+
                 document.getElementById('status-koneksi').innerHTML = '<i class="fa-solid fa-circle text-xs mr-1 animate-pulse"></i> Berhasil Sinkron';
+
                 document.getElementById('status-koneksi').className = "text-sm bg-emerald-500/20 text-emerald-400 px-3 py-1 rounded-full border border-emerald-500/30 font-medium";
 
+
+
             } catch (error) {
+
                 document.getElementById('status-koneksi').innerHTML = '<i class="fa-solid fa-circle-exclamation text-xs mr-1"></i> Putus Koneksi';
+
                 document.getElementById('status-koneksi').className = "text-sm bg-rose-500/20 text-rose-400 px-3 py-1 rounded-full border border-rose-500/30 font-medium";
+
             }
+
         }
 
-        // ================= MANAGEMENT JADWAL DINAMIS =================
+
+
+        // ================= LOGIKA MANAGEMENT JADWAL DINAMIS =================
+
+
+
+        // Memuat daftar jadwal dari memory penyimpanan browser (LocalStorage)
+
         function loadJadwalDariStorage() {
+
             const dataLokal = localStorage.getItem('fishFeeder_Schedules');
+
             if (dataLokal) {
+
                 daftarJadwal = JSON.parse(dataLokal);
+
+                // Reset status terpicu harian saat web baru dibuka kembali
+
                 daftarJadwal.forEach(j => j.sudahTerpancing = false);
+
             }
+
             renderDaftarJadwalKeLayar();
+
         }
+
+
+
+        // Fungsi menyimpan array jadwal saat ini ke LocalStorage browser
 
         function simpanJadwalKeStorage() {
+
             localStorage.setItem('fishFeeder_Schedules', JSON.stringify(daftarJadwal));
+
             renderDaftarJadwalKeLayar();
+
         }
+
+
+
+        // Fungsi menambah baris jadwal baru ke sistem
 
         function tambahJadwalBaru() {
+
             const timeVal = document.getElementById('new-time').value;
+
             const durationVal = parseInt(document.getElementById('new-duration').value);
 
+
+
             if (!timeVal || isNaN(durationVal) || durationVal < 1) {
+
                 alert("Mohon isi target waktu jam dan durasi detik pakan dengan benar!");
+
                 return;
+
             }
+
+
+
+            // Struktur objek database kecil jadwal
 
             const jadwalBaru = {
+
                 id: Date.now(),
+
                 waktu: timeVal,
+
                 durasi: durationVal,
+
                 statusAktif: true,
-                sudahTerpancing = false
+
+                sudahTerpancing: false
+
             };
+
+
 
             daftarJadwal.push(jadwalBaru);
+
+            // Urutkan daftar jadwal berdasarkan jam terkecil agar tampilan rapi kronologis
+
             daftarJadwal.sort((a, b) => a.waktu.localeCompare(b.waktu));
+
+            
+
             simpanJadwalKeStorage();
+
+            
+
+            // Reset kolom input setelah sukses menambah
+
             document.getElementById('new-time').value = "";
+
         }
+
+
+
+        // Fungsi mematikan/menyalakan sakelar (Toggle Switch On/Off)
 
         function toggleStatusJadwal(id) {
+
             const index = daftarJadwal.findIndex(j => j.id === id);
+
             if (index !== -1) {
+
                 daftarJadwal[index].statusAktif = !daftarJadwal[index].statusAktif;
-                daftarJadwal[index].sudahTerpancing = false;
+
+                daftarJadwal[index].sudahTerpancing = false; // Reset status pemicu
+
                 simpanJadwalKeStorage();
+
             }
+
         }
+
+
+
+        // Fungsi menghapus baris jadwal (Tombol silang X)
 
         function hapusJadwal(id) {
+
             if (confirm("Apakah Anda yakin ingin menghapus jadwal pakan ini?")) {
+
                 daftarJadwal = daftarJadwal.filter(j => j.id !== id);
+
                 simpanJadwalKeStorage();
+
             }
+
         }
+
+
+
+        // Merender susunan HTML daftar jadwal secara dinamis persis seperti gambar d9699c
 
         function renderDaftarJadwalKeLayar() {
+
             const container = document.getElementById('container-daftar-jadwal');
+
             if (daftarJadwal.length === 0) {
+
                 container.innerHTML = `<div class="text-center text-sm text-slate-500 py-6 border border-dashed border-slate-700/60 rounded-xl">Belum ada jadwal pakan otomatis. Gunakan menu di atas untuk menambah.</div>`;
+
                 return;
+
             }
+
+
 
             let htmlTeks = "";
+
             daftarJadwal.forEach(j => {
+
                 const isChecked = j.statusAktif ? 'checked' : '';
+
                 const styleTeksRedup = j.statusAktif ? 'text-white' : 'text-slate-500 line-through';
+
                 
+
                 htmlTeks += `
+
                     <div class="flex items-center justify-between bg-slate-900/50 border border-slate-700/60 p-4 rounded-xl shadow-sm transition hover:bg-slate-900 duration-200">
+
                         <div class="flex items-center gap-6">
+
                             <div class="text-2xl font-mono font-bold tracking-wider ${styleTeksRedup}">${j.waktu}</div>
+
                             <div class="text-xs text-slate-400 font-medium">Durasi: <span class="text-teal-400 font-bold font-mono">${j.durasi}</span> detik</div>
+
                         </div>
+
+                        
+
                         <div class="flex items-center gap-4">
+
                             <label class="relative inline-flex items-center cursor-pointer select-none">
+
                                 <input type="checkbox" class="sr-only peer" ${isChecked} onchange="toggleStatusJadwal(${j.id})">
-                                <div class="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-teal-400"></div>
+
+                                <div class="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 afternoon:w-5 after:w-5 after:transition-all peer-checked:bg-teal-400"></div>
+
                             </label>
+
+                            
+
                             <button onclick="hapusJadwal(${j.id})" class="text-slate-500 hover:text-rose-500 transition px-1 text-sm" title="Hapus Jadwal">
+
                                 <i class="fa-solid fa-xmark"></i>
+
                             </button>
+
                         </div>
+
                     </div>
+
                 `;
+
             });
+
             container.innerHTML = htmlTeks;
+
         }
 
-        // ================= ====== LOGIKA BARU: RIWAYAT PAKAN ====== =================
-        function loadRiwayatDariStorage() {
-            const logLokal = localStorage.getItem('fishFeeder_Logs');
-            if (logLokal) {
-                daftarRiwayat = JSON.parse(logLokal);
-            }
-            renderRiwayatKeLayar();
-        }
 
-        function tambahLogRiwayat(sumber, durasiDetik) {
-            const sekarang = new Date();
-            const opsiTanggal = { year: 'numeric', month: 'short', day: 'numeric' };
-            const formatWaktu = sekarang.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-            const formatTanggal = sekarang.toLocaleDateString('id-ID', opsiTanggal);
 
-            const logBaru = {
-                id: Date.now(),
-                timestamp: `${formatTanggal}, ${formatWaktu}`,
-                sumber: sumber,
-                durasi: durasiDetik
-            };
+        // ================= LOGIKA INTI EKSEKUSI HARDWARE VIA V0 =================
 
-            daftarRiwayat.unshift(logBaru); // Menyisipkan log terbaru di baris paling atas (index 0)
-            
-            // Batasi riwayat maksimal 50 baris data agar memori localstorage tidak penuh penuh
-            if (daftarRiwayat.length > 50) {
-                daftarRiwayat.pop();
-            }
 
-            localStorage.setItem('fishFeeder_Logs', JSON.stringify(daftarRiwayat));
-            renderRiwayatKeLayar();
-        }
 
-        function renderRiwayatKeLayar() {
-            const containerLog = document.getElementById('container-riwayat-log');
-            if (daftarRiwayat.length === 0) {
-                containerLog.innerHTML = `
-                    <tr>
-                        <td colspan="3" class="text-center text-slate-500 py-6">Belum ada riwayat aktivitas pakan.</td>
-                    </tr>`;
-                return;
-            }
+        // Logika Utama Buka - Tunda - Tutup Servo via V0 murni
 
-            let htmlLog = "";
-            daftarRiwayat.forEach(log => {
-                // Berikan warna text label pembeda antara Manual dan Otomatis
-                const badgeWarna = log.sumber.includes('Manual') 
-                    ? 'text-amber-400 bg-amber-500/10 border-amber-500/20' 
-                    : 'text-teal-400 bg-teal-500/10 border-teal-500/20';
-
-                htmlLog += `
-                    <tr class="hover:bg-slate-800/40 transition duration-150">
-                        <td class="p-3 font-mono text-xs text-slate-300">${log.timestamp}</td>
-                        <td class="p-3">
-                            <span class="px-2 py-0.5 rounded text-xs border font-medium ${badgeWarna}">
-                                ${log.sumber}
-                            </span>
-                        </td>
-                        <td class="p-3 text-center font-mono text-teal-400 font-bold">${log.durasi}s</td>
-                    </tr>
-                `;
-            });
-            containerLog.innerHTML = htmlLog;
-        }
-
-        function bersihkanRiwayat() {
-            if (confirm("Apakah Anda yakin ingin menghapus seluruh log riwayat pemberian pakan?")) {
-                daftarRiwayat = [];
-                localStorage.removeItem('fishFeeder_Logs');
-                renderRiwayatKeLayar();
-            }
-        }
-
-        // ================= EKSEKUSI HARDWARE VIA V0 =================
         async function eksekusiPakarServo(durasiDetik, sumber) {
+
             const btn = document.getElementById('btn-servo');
+
             if (sumber === "Manual") {
+
                 btn.disabled = true;
+
                 btn.innerHTML = '<i class="fa-solid fa-circle-notch animate-spin"></i> Memproses...';
+
             }
+
+
 
             console.log(`[ALARM] Menjalankan pemberian pakan (${sumber}) selama ${durasiDetik} detik.`);
 
+
+
             try {
+
                 // 1. Perintahkan ESP32 untuk membuka katup servo
+
                 await fetch(`${BLYNK_URL}/update?token=${BLYNK_TOKEN}&V0=1`);
+
                 
+
                 // Menahan posisi servo terbuka sesuai durasi detik dari web
+
                 await new Promise(resolve => setTimeout(resolve, durasiDetik * 1000));
+
                 
+
                 // 2. Perintahkan ESP32 untuk menutup kembali katup servo
+
                 await fetch(`${BLYNK_URL}/update?token=${BLYNK_TOKEN}&V0=0`);
+
                 
-                // === SIMPAN KE RIWAYAT JIKA API SUKSES ===
-                tambahLogRiwayat(sumber, durasiDetik);
 
                 if (sumber === "Manual") alert("Pakan manual berhasil dijatuhkan!");
+
             } catch (error) {
+
                 console.error("Gagal mengontrol servo via web API:", error);
+
                 if (sumber === "Manual") alert("Gagal terhubung dengan alat. Periksa koneksi internet.");
+
             } finally {
+
                 if (sumber === "Manual") {
+
                     btn.disabled = false;
+
                     btn.innerHTML = '<i class="fa-solid fa-utensils"></i> Beri Pakan Sekarang';
+
                 }
+
             }
+
         }
+
+
 
         // Pengecek Jam Dinding Latar Belakang (Berjalan tiap 1 detik sekali)
+
         function backgroundTimeChecker() {
+
             const sekarang = new Date();
+
             const jamMenitSekarang = sekarang.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+
             const detikSekarang = sekarang.getSeconds();
 
+
+
+            // Reset status pemicu harian otomatis pada tengah malam (pukul 00:00:00)
+
             if (jamMenitSekarang === "00:00" && detikSekarang === 0) {
+
                 daftarJadwal.forEach(j => j.sudahTerpancing = false);
+
             }
 
+
+
+            // Pindai semua jadwal dalam array database lokal
+
             daftarJadwal.forEach(j => {
+
                 if (j.statusAktif && j.waktu === jamMenitSekarang && !j.sudahTerpancing) {
-                    j.sudahTerpancing = true; 
-                    eksekusiPakarServo(j.durasi, `Jadwal Otomatis`);
+
+                    j.sudahTerpancing = true; // Kunci agar tidak mengeksekusi berulang-ulang di menit yang sama
+
+                    eksekusiPakarServo(j.durasi, `Jadwal Otomatis ${j.waktu}`);
+
                 }
+
             });
+
         }
 
+
+
         // Jalankan siklus monitoring latar belakang
-        setInterval(fetchBlynkData, 3000); 
-        setInterval(backgroundTimeChecker, 1000); 
+
+        setInterval(fetchBlynkData, 3000); // Sinkronisasi sensor & grafik per 3 detik
+
+        setInterval(backgroundTimeChecker, 1000); // Cek jam dinding per 1 detik
+
         
+
         // Pemicu awal saat halaman web berhasil dibuka pertama kali
+
         fetchBlynkData();
+
         loadJadwalDariStorage();
-        loadRiwayatDariStorage(); // Memuat data log riwayat pakan
+
     </script>
+
 </body>
+
 </html>
