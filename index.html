@@ -56,7 +56,7 @@
                     </div>
                     <input type="range" id="slider-durasi-manual" min="1" max="10" value="2" oninput="updateLabelDurasi()" class="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-amber-500 mb-4">
                 </div>
-                <button onclick="beriPakanManual()" id="btn-servo" class="w-full bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white font-bold py-3 px-4 rounded-xl shadow-lg transition duration-200 transform active:scale-95 flex items-center justify-center gap-2">
+                <button onclick="eksekusiPakarServo(document.getElementById('slider-durasi-manual').value, 'Manual')" id="btn-servo" class="w-full bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white font-bold py-3 px-4 rounded-xl shadow-lg transition duration-200 transform active:scale-95 flex items-center justify-center gap-2">
                     <i class="fa-solid fa-utensils"></i> Beri Pakan Sekarang
                 </button>
             </div>
@@ -64,9 +64,12 @@
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-            <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-xl">
+            <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-xl relative overflow-hidden">
+                <div id="badge-status-j1" class="absolute top-0 right-0 bg-slate-700 text-slate-400 text-[10px] uppercase font-bold px-3 py-1 rounded-bl-xl border-l border-b border-slate-600">
+                    Tidak Aktif
+                </div>
                 <h3 class="text-base md:text-lg font-bold text-slate-300 mb-4 flex items-center gap-2">
-                    <i class="fa-regular fa-clock text-teal-400"></i> Atur Jadwal Makan 1 (V6)
+                    <i class="fa-regular fa-clock text-teal-400"></i> Jadwal Otomatis 1
                 </h3>
                 <div class="space-y-4">
                     <div class="flex gap-2 items-center">
@@ -74,19 +77,22 @@
                         <input type="time" id="input-jadwal1" class="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-white text-center font-semibold focus:outline-none focus:border-teal-400">
                     </div>
                     <div class="flex gap-2 items-center">
-                        <span class="text-xs text-slate-400 w-24">Durasi Katup:</span>
+                        <span class="text-xs text-slate-400 w-24">Durasi Buka:</span>
                         <input type="number" id="durasi-jadwal1" min="1" max="10" value="2" class="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-white text-center font-semibold focus:outline-none focus:border-teal-400">
                         <span class="text-xs text-slate-400">Detik</span>
                     </div>
-                    <button onclick="simpanJadwal('V6', 'input-jadwal1', 'durasi-jadwal1')" class="w-full bg-teal-500 hover:bg-teal-600 text-slate-900 font-bold py-2.5 rounded-xl transition duration-200">
-                        Simpan Jadwal 1
+                    <button onclick="simpanJadwalLokal(1)" class="w-full bg-teal-500 hover:bg-teal-600 text-slate-900 font-bold py-2.5 rounded-xl transition duration-200">
+                        Simpan & Aktifkan Jadwal 1
                     </button>
                 </div>
             </div>
 
-            <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-xl">
+            <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-xl relative overflow-hidden">
+                <div id="badge-status-j2" class="absolute top-0 right-0 bg-slate-700 text-slate-400 text-[10px] uppercase font-bold px-3 py-1 rounded-bl-xl border-l border-b border-slate-600">
+                    Tidak Aktif
+                </div>
                 <h3 class="text-base md:text-lg font-bold text-slate-300 mb-4 flex items-center gap-2">
-                    <i class="fa-regular fa-clock text-blue-400"></i> Atur Jadwal Makan 2 (V7)
+                    <i class="fa-regular fa-clock text-blue-400"></i> Jadwal Otomatis 2
                 </h3>
                 <div class="space-y-4">
                     <div class="flex gap-2 items-center">
@@ -94,12 +100,12 @@
                         <input type="time" id="input-jadwal2" class="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-white text-center font-semibold focus:outline-none focus:border-blue-400">
                     </div>
                     <div class="flex gap-2 items-center">
-                        <span class="text-xs text-slate-400 w-24">Durasi Katup:</span>
+                        <span class="text-xs text-slate-400 w-24">Durasi Buka:</span>
                         <input type="number" id="durasi-jadwal2" min="1" max="10" value="2" class="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-white text-center font-semibold focus:outline-none focus:border-blue-400">
                         <span class="text-xs text-slate-400">Detik</span>
                     </div>
-                    <button onclick="simpanJadwal('V7', 'input-jadwal2', 'durasi-jadwal2')" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2.5 rounded-xl transition duration-200">
-                        Simpan Jadwal 2
+                    <button onclick="simpanJadwalLokal(2)" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2.5 rounded-xl transition duration-200">
+                        Simpan & Aktifkan Jadwal 2
                     </button>
                 </div>
             </div>
@@ -123,37 +129,24 @@
         const BLYNK_TOKEN = "M9tF9T0A8oG40ZARYeRdMbiZdQ2-5pAO"; 
         const BLYNK_URL = "https://blynk.cloud/external/api"; 
 
-        // Update teks keterangan slider durasi manual
+        // State Jadwal Lokal (Disimpan di memori browser)
+        let jadwal1 = { waktu: "", durasi: 2, sudahDieksekusi: false };
+        let jadwal2 = { waktu: "", durasi: 2, sudahDieksekusi: false };
+
         function updateLabelDurasi() {
             const val = document.getElementById('slider-durasi-manual').value;
             document.getElementById('label-durasi-manual').innerText = val + " Detik";
         }
 
-        // Inisialisasi Grafik Menggunakan Chart.js
+        // Inisialisasi Grafik Chart.js
         const ctx = document.getElementById('iotChart').getContext('2d');
         const iotChart = new Chart(ctx, {
             type: 'line',
             data: {
                 labels: [], 
                 datasets: [
-                    {
-                        label: 'Sisa Pakan (%)',
-                        data: [],
-                        borderColor: '#2dd4bf', 
-                        backgroundColor: 'rgba(45, 212, 191, 0.05)',
-                        borderWidth: 3,
-                        tension: 0.3,
-                        fill: true
-                    },
-                    {
-                        label: 'Suhu Wadah (°C)',
-                        data: [],
-                        borderColor: '#60a5fa', 
-                        backgroundColor: 'rgba(96, 165, 250, 0.05)',
-                        borderWidth: 3,
-                        tension: 0.3,
-                        fill: true
-                    }
+                    { label: 'Sisa Pakan (%)', data: [], borderColor: '#2dd4bf', backgroundColor: 'rgba(45, 212, 191, 0.05)', borderWidth: 3, tension: 0.3, fill: true },
+                    { label: 'Suhu Wadah (°C)', data: [], borderColor: '#60a5fa', backgroundColor: 'rgba(96, 165, 250, 0.05)', borderWidth: 3, tension: 0.3, fill: true }
                 ]
             },
             options: {
@@ -178,14 +171,13 @@
                 const suhuVal = parseFloat(await resSuhu.text());
                 const jarakRaw = parseFloat(await resJarak.text());
 
-                // Konversi jarak ultrasonik cm ke persentase (%) wadah pakan
-                const tinggiMaksimalWadah = 30; // Batas maksimal tangki pakan Anda
+                // Konversi jarak ultrasonik ke persentase wadah pakan
+                const tinggiMaksimalWadah = 30; 
                 let sisaPakanPersen = ((tinggiMaksimalWadah - jarakRaw) / tinggiMaksimalWadah) * 100;
-                
                 if (sisaPakanPersen > 100) sisaPakanPersen = 100;
                 if (sisaPakanPersen < 0 || isNaN(sisaPakanPersen)) sisaPakanPersen = 0;
 
-                // Tampilkan data teks ke Web
+                // Tampilkan data teks
                 if (!isNaN(suhuVal)) document.getElementById('val-kelembapan').innerText = suhuVal.toFixed(1) + "°C";
                 if (!isNaN(jarakRaw)) {
                     document.getElementById('val-volume').innerText = Math.round(sisaPakanPersen) + "%";
@@ -213,79 +205,123 @@
             }
         }
 
-        // Ambil pengaturan yang ada di Blynk Cloud saat web dimuat pertama kali
-        async function loadSavedData() {
-            try {
-                const [resV6, resV7, resV4] = await Promise.all([
-                    fetch(`${BLYNK_URL}/get?token=${BLYNK_TOKEN}&V6`),
-                    fetch(`${BLYNK_URL}/get?token=${BLYNK_TOKEN}&V7`),
-                    fetch(`${BLYNK_URL}/get?token=${BLYNK_TOKEN}&V4`)
-                ]);
-                const t1 = await resV6.text();
-                const t2 = await resV7.text();
-                const dManual = await resV4.text();
-                
-                if(t1 && t1.includes(":")) document.getElementById('input-jadwal1').value = t1.trim().substring(0,5);
-                if(t2 && t2.includes(":")) document.getElementById('input-jadwal2').value = t2.trim().substring(0,5);
-                if(dManual && !isNaN(dManual)) {
-                    document.getElementById('slider-durasi-manual').value = parseInt(dManual);
-                    updateLabelDurasi();
-                }
-            } catch(e) { console.log("Gagal memuat konfigurasi awal."); }
-        }
+        // Simpan Konfigurasi Jadwal ke LocalStorage Browser agar tidak hilang saat web ditutup
+        function simpanJadwalLokal(nomorJadwal) {
+            const waktuInput = document.getElementById(`input-jadwal${nomorJadwal}`).value;
+            const durasiInput = document.getElementById(`durasi-jadwal${nomorJadwal}`).value;
 
-        // Simpan Jam Jadwal Makan dan Kirim Durasi Makan ke V4
-        async function simpanJadwal(virtualPin, inputTimeId, inputDurationId) {
-            const waktuSaran = document.getElementById(inputTimeId).value;
-            const durasiDetik = document.getElementById(inputDurationId).value;
-
-            if (!waktuSaran || !durasiDetik) {
-                alert("Mohon isi waktu jam dan nilai durasi pakan!");
+            if (!waktuInput || !durasiInput) {
+                alert("Mohon tentukan waktu dan durasi katup!");
                 return;
             }
 
-            try {
-                const formatBlynkTime = `${waktuSaran}:00`;
-                // 1. Kirim data Jam Jadwal ke Pin V6/V7
-                await fetch(`${BLYNK_URL}/update?token=${BLYNK_TOKEN}&${virtualPin}=${encodeURIComponent(formatBlynkTime)}`);
-                // 2. Kirim durasi katup pakan ke Pin V4 feed_duration
-                await fetch(`${BLYNK_URL}/update?token=${BLYNK_TOKEN}&V4=${durasiDetik}`);
-                
-                alert(`Sukses! Jadwal diset jam ${waktuSaran} dengan durasi katup ${durasiDetik} detik.`);
-            } catch (error) {
-                alert("Gagal memperbarui jadwal.");
+            const dataJadwal = { waktu: waktuInput, durasi: parseInt(durasiInput), sudahDieksekusi: false };
+            localStorage.setItem(`jadwalWeb_${nomorJadwal}`, JSON.stringify(dataJadwal));
+
+            if (nomorJadwal === 1) {
+                jadwal1 = dataJadwal;
+                updateBadgeJadwal(1, true, waktuInput);
+            } else {
+                jadwal2 = dataJadwal;
+                updateBadgeJadwal(2, true, waktuInput);
+            }
+            alert(`Jadwal ${nomorJadwal} berhasil diaktifkan pada pukul ${waktuInput} selama ${durasiInput} detik!`);
+        }
+
+        function updateBadgeJadwal(nomor, aktif, waktu = "") {
+            const el = document.getElementById(`badge-status-j${nomor}`);
+            if (aktif) {
+                el.innerText = `Aktif: ${waktu}`;
+                el.className = "absolute top-0 right-0 bg-emerald-500 text-slate-900 text-[10px] uppercase font-black px-3 py-1 rounded-bl-xl";
+            } else {
+                el.innerText = "Tidak Aktif";
+                el.className = "absolute top-0 right-0 bg-slate-700 text-slate-400 text-[10px] uppercase font-bold px-3 py-1 rounded-bl-xl border-l border-b border-slate-600";
             }
         }
 
-        // Tombol Aksi Pemberian Pakan Manual dengan Pembacaan Dinamis Slider V4
-        async function beriPakanManual() {
+        // Memuat ulang jadwal yang tersimpan di browser saat web dibuka kembali
+        function loadSavedData() {
+            const j1Saved = localStorage.getItem('jadwalWeb_1');
+            const j2Saved = localStorage.getItem('jadwalWeb_2');
+
+            if (j1Saved) {
+                jadwal1 = JSON.parse(j1Saved);
+                jadwal1.sudahDieksekusi = false; // Reset status eksekusi harian
+                document.getElementById('input-jadwal1').value = jadwal1.waktu;
+                document.getElementById('durasi-jadwal1').value = jadwal1.durasi;
+                updateBadgeJadwal(1, true, jadwal1.waktu);
+            }
+            if (j2Saved) {
+                jadwal2 = JSON.parse(j2Saved);
+                jadwal2.sudahDieksekusi = false;
+                document.getElementById('input-jadwal2').value = jadwal2.waktu;
+                document.getElementById('durasi-jadwal2').value = jadwal2.durasi;
+                updateBadgeJadwal(2, true, jadwal2.waktu);
+            }
+        }
+
+        // Logika Inti: Fungsi Pengendali Buka - Tunda - Tutup Katup Servo lewat V0 murni
+        async function eksekusiPakarServo(durasiDetik, sumber) {
             const btn = document.getElementById('btn-servo');
-            const durasiMiliDetik = parseInt(document.getElementById('slider-durasi-manual').value) * 1000;
-            
-            btn.disabled = true;
-            btn.innerHTML = '<i class="fa-solid fa-circle-notch animate-spin"></i> Memproses Alat...';
+            if (sumber === "Manual") {
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fa-solid fa-circle-notch animate-spin"></i> Memproses Alat...';
+            }
+
+            console.log(`[LOG] Memicu pakan dari ${sumber} selama ${durasiDetik} detik.`);
 
             try {
-                // Sinkronkan nilai slider ke pin V4 di Cloud Blynk terlebih dahulu
-                const durasiDetik = durasiMiliDetik / 1000;
-                await fetch(`${BLYNK_URL}/update?token=${BLYNK_TOKEN}&V4=${durasiDetik}`);
-
-                // Jalankan pergerakan katup servo via V0
+                // 1. Kirim sinyal 1 ke V0 untuk MEMBUKA katup servo otomatis
                 await fetch(`${BLYNK_URL}/update?token=${BLYNK_TOKEN}&V0=1`);
-                await new Promise(resolve => setTimeout(resolve, durasiMiliDetik));
+                
+                // Menahan katup tetap menganga sesuai durasi detik dari web
+                await new Promise(resolve => setTimeout(resolve, durasiDetik * 1000));
+                
+                // 2. Kirim sinyal 0 ke V0 untuk MENUTUP kembali katup servo otomatis
                 await fetch(`${BLYNK_URL}/update?token=${BLYNK_TOKEN}&V0=0`);
                 
-                alert("Pakan manual berhasil dijatuhkan!");
+                if (sumber === "Manual") alert("Pakan manual sukses dijatuhkan!");
             } catch (error) {
-                alert("Gagal mengontrol alat.");
+                console.error("Gagal mengontrol servo via web:", error);
+                if (sumber === "Manual") alert("Koneksi terganggu. Gagal menggerakkan alat.");
             } finally {
-                btn.disabled = false;
-                btn.innerHTML = '<i class="fa-solid fa-utensils"></i> Beri Pakan Sekarang';
+                if (sumber === "Manual") {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fa-solid fa-utensils"></i> Beri Pakan Sekarang';
+                }
             }
         }
 
-        // Jalankan sistem looping berkala
-        setInterval(fetchBlynkData, 3000);
+        // Fungsi Background Checker Jam Dinding (Berjalan otomatis setiap 1 detik)
+        function rukunCekWaktuPakan() {
+            const sekarang = new Date();
+            const jamMenitSekarang = sekarang.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+            const detikSekarang = sekarang.getSeconds();
+
+            // Reset status pemicu otomatis harian saat tengah malam (pukul 00:00) agar jadwal besok bisa terpicu lagi
+            if (jamMenitSekarang === "00:00" && detikSekarang === 0) {
+                jadwal1.sudahDieksekusi = false;
+                jadwal2.sudahDieksekusi = false;
+            }
+
+            // Validasi Pemicu Jadwal 1
+            if (jadwal1.waktu && jamMenitSekarang === jadwal1.waktu && !jadwal1.sudahDieksekusi) {
+                jadwal1.sudahDieksekusi = true;
+                eksekusiPakarServo(jadwal1.durasi, "Otomatis Jadwal 1");
+            }
+
+            // Validasi Pemicu Jadwal 2
+            if (jadwal2.waktu && jamMenitSekarang === jadwal2.waktu && !jadwal2.sudahDieksekusi) {
+                jadwal2.sudahDieksekusi = true;
+                eksekusiPakarServo(jadwal2.durasi, "Otomatis Jadwal 2");
+            }
+        }
+
+        // Jalankan seluruh interval looping background sistem
+        setInterval(fetchBlynkData, 3000); // Tarik data sensor tiap 3 detik
+        setInterval(rukunCekWaktuPakan, 1000); // Cek ketepatan jam dinding tiap 1 detik
+        
+        // Eksekusi pemuatan fungsi di awal muat halaman web
         fetchBlynkData();
         loadSavedData();
     </script>
