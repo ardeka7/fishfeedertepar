@@ -63,51 +63,28 @@
 
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-            <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-xl relative overflow-hidden">
-                <div id="badge-status-j1" class="absolute top-0 right-0 bg-slate-700 text-slate-400 text-[10px] uppercase font-bold px-3 py-1 rounded-bl-xl border-l border-b border-slate-600">
-                    Tidak Aktif
+        <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-xl mb-8">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6 border-b border-slate-700 pb-4">
+                <div>
+                    <h3 class="text-lg font-bold text-slate-200 flex items-center gap-2">
+                        <i class="fa-regular fa-calendar-check text-teal-400"></i> JADWAL OTOMATIS
+                    </h3>
+                    <p class="text-xs text-slate-500 mt-1">Jadwal tersimpan di browser - Servo aktif via V0 saat jadwal tiba</p>
                 </div>
-                <h3 class="text-base md:text-lg font-bold text-slate-300 mb-4 flex items-center gap-2">
-                    <i class="fa-regular fa-clock text-teal-400"></i> Jadwal Otomatis 1
-                </h3>
-                <div class="space-y-4">
-                    <div class="flex gap-2 items-center">
-                        <span class="text-xs text-slate-400 w-24">Jam Makan:</span>
-                        <input type="time" id="input-jadwal1" class="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-white text-center font-semibold focus:outline-none focus:border-teal-400">
+                <div class="flex flex-wrap items-center gap-3 bg-slate-900/60 p-3 rounded-xl border border-slate-700/50 w-full md:w-auto">
+                    <input type="time" id="new-time" class="bg-slate-800 border border-slate-700 rounded-lg px-2 py-1.5 text-sm font-semibold text-white focus:outline-none focus:border-teal-400">
+                    <div class="flex items-center gap-1.5">
+                        <input type="number" id="new-duration" min="1" max="10" value="3" class="w-14 bg-slate-800 border border-slate-700 rounded-lg px-2 py-1.5 text-sm font-semibold text-center text-white focus:outline-none focus:border-teal-400">
+                        <span class="text-xs text-slate-400">detik</span>
                     </div>
-                    <div class="flex gap-2 items-center">
-                        <span class="text-xs text-slate-400 w-24">Durasi Buka:</span>
-                        <input type="number" id="durasi-jadwal1" min="1" max="10" value="2" class="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-white text-center font-semibold focus:outline-none focus:border-teal-400">
-                        <span class="text-xs text-slate-400">Detik</span>
-                    </div>
-                    <button onclick="simpanJadwalLokal(1)" class="w-full bg-teal-500 hover:bg-teal-600 text-slate-900 font-bold py-2.5 rounded-xl transition duration-200">
-                        Simpan & Aktifkan Jadwal 1
+                    <button onclick="tambahJadwalBaru()" class="bg-teal-500 hover:bg-teal-600 text-slate-900 font-bold text-xs px-3 py-2 rounded-lg transition flex items-center gap-1">
+                        <i class="fa-solid fa-plus"></i> Tambah Jadwal
                     </button>
                 </div>
             </div>
 
-            <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-xl relative overflow-hidden">
-                <div id="badge-status-j2" class="absolute top-0 right-0 bg-slate-700 text-slate-400 text-[10px] uppercase font-bold px-3 py-1 rounded-bl-xl border-l border-b border-slate-600">
-                    Tidak Aktif
-                </div>
-                <h3 class="text-base md:text-lg font-bold text-slate-300 mb-4 flex items-center gap-2">
-                    <i class="fa-regular fa-clock text-blue-400"></i> Jadwal Otomatis 2
-                </h3>
-                <div class="space-y-4">
-                    <div class="flex gap-2 items-center">
-                        <span class="text-xs text-slate-400 w-24">Jam Makan:</span>
-                        <input type="time" id="input-jadwal2" class="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-white text-center font-semibold focus:outline-none focus:border-blue-400">
-                    </div>
-                    <div class="flex gap-2 items-center">
-                        <span class="text-xs text-slate-400 w-24">Durasi Buka:</span>
-                        <input type="number" id="durasi-jadwal2" min="1" max="10" value="2" class="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-white text-center font-semibold focus:outline-none focus:border-blue-400">
-                        <span class="text-xs text-slate-400">Detik</span>
-                    </div>
-                    <button onclick="simpanJadwalLokal(2)" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2.5 rounded-xl transition duration-200">
-                        Simpan & Aktifkan Jadwal 2
-                    </button>
-                </div>
+            <div id="container-daftar-jadwal" class="space-y-3">
+                <div class="text-center text-sm text-slate-500 py-4">Belum ada jadwal pakan yang dikonfigurasi.</div>
             </div>
         </div>
 
@@ -129,9 +106,7 @@
         const BLYNK_TOKEN = "M9tF9T0A8oG40ZARYeRdMbiZdQ2-5pAO"; 
         const BLYNK_URL = "https://blynk.cloud/external/api"; 
 
-        // State Jadwal Lokal (Disimpan di memori browser)
-        let jadwal1 = { waktu: "", durasi: 2, sudahDieksekusi: false };
-        let jadwal2 = { waktu: "", durasi: 2, sudahDieksekusi: false };
+        let daftarJadwal = [];
 
         function updateLabelDurasi() {
             const val = document.getElementById('slider-durasi-manual').value;
@@ -171,20 +146,17 @@
                 const suhuVal = parseFloat(await resSuhu.text());
                 const jarakRaw = parseFloat(await resJarak.text());
 
-                // Konversi jarak ultrasonik ke persentase wadah pakan
                 const tinggiMaksimalWadah = 30; 
                 let sisaPakanPersen = ((tinggiMaksimalWadah - jarakRaw) / tinggiMaksimalWadah) * 100;
                 if (sisaPakanPersen > 100) sisaPakanPersen = 100;
                 if (sisaPakanPersen < 0 || isNaN(sisaPakanPersen)) sisaPakanPersen = 0;
 
-                // Tampilkan data teks
                 if (!isNaN(suhuVal)) document.getElementById('val-kelembapan').innerText = suhuVal.toFixed(1) + "°C";
                 if (!isNaN(jarakRaw)) {
                     document.getElementById('val-volume').innerText = Math.round(sisaPakanPersen) + "%";
                     document.getElementById('val-jarak-raw').innerText = `Jarak: ${jarakRaw} cm`;
                 }
 
-                // Update Grafik
                 const waktuSekarang = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
                 if (iotChart.data.labels.length > 8) { 
                     iotChart.data.labels.shift();
@@ -205,85 +177,114 @@
             }
         }
 
-        // Simpan Konfigurasi Jadwal ke LocalStorage Browser agar tidak hilang saat web ditutup
-        function simpanJadwalLokal(nomorJadwal) {
-            const waktuInput = document.getElementById(`input-jadwal${nomorJadwal}`).value;
-            const durasiInput = document.getElementById(`durasi-jadwal${nomorJadwal}`).value;
+        // --- ENGINE MANAGEMENT JADWAL ---
+        function loadJadwalDariStorage() {
+            const dataLokal = localStorage.getItem('fishFeeder_Schedules');
+            if (dataLokal) {
+                daftarJadwal = JSON.parse(dataLokal);
+                daftarJadwal.forEach(j => j.sudahTerpancing = false);
+            }
+            renderDaftarJadwalKeLayar();
+        }
 
-            if (!waktuInput || !durasiInput) {
-                alert("Mohon tentukan waktu dan durasi katup!");
+        function simpanJadwalKeStorage() {
+            localStorage.setItem('fishFeeder_Schedules', JSON.stringify(daftarJadwal));
+            renderDaftarJadwalKeLayar();
+        }
+
+        function tambahJadwalBaru() {
+            const timeVal = document.getElementById('new-time').value;
+            const durationVal = parseInt(document.getElementById('new-duration').value);
+
+            if (!timeVal || isNaN(durationVal) || durationVal < 1) {
+                alert("Mohon tentukan waktu dan durasi detik pakan dengan benar!");
                 return;
             }
 
-            const dataJadwal = { waktu: waktuInput, durasi: parseInt(durasiInput), sudahDieksekusi: false };
-            localStorage.setItem(`jadwalWeb_${nomorJadwal}`, JSON.stringify(dataJadwal));
+            const jadwalBaru = {
+                id: Date.now(),
+                waktu: timeVal,
+                durasi: durationVal,
+                statusAktif: true,
+                sudahTerpancing: false
+            };
 
-            if (nomorJadwal === 1) {
-                jadwal1 = dataJadwal;
-                updateBadgeJadwal(1, true, waktuInput);
-            } else {
-                jadwal2 = dataJadwal;
-                updateBadgeJadwal(2, true, waktuInput);
-            }
-            alert(`Jadwal ${nomorJadwal} berhasil diaktifkan pada pukul ${waktuInput} selama ${durasiInput} detik!`);
+            daftarJadwal.push(jadwalBaru);
+            daftarJadwal.sort((a, b) => a.waktu.localeCompare(b.waktu));
+            simpanJadwalKeStorage();
+            document.getElementById('new-time').value = "";
         }
 
-        function updateBadgeJadwal(nomor, aktif, waktu = "") {
-            const el = document.getElementById(`badge-status-j${nomor}`);
-            if (aktif) {
-                el.innerText = `Aktif: ${waktu}`;
-                el.className = "absolute top-0 right-0 bg-emerald-500 text-slate-900 text-[10px] uppercase font-black px-3 py-1 rounded-bl-xl";
-            } else {
-                el.innerText = "Tidak Aktif";
-                el.className = "absolute top-0 right-0 bg-slate-700 text-slate-400 text-[10px] uppercase font-bold px-3 py-1 rounded-bl-xl border-l border-b border-slate-600";
-            }
-        }
-
-        // Memuat ulang jadwal yang tersimpan di browser saat web dibuka kembali
-        function loadSavedData() {
-            const j1Saved = localStorage.getItem('jadwalWeb_1');
-            const j2Saved = localStorage.getItem('jadwalWeb_2');
-
-            if (j1Saved) {
-                jadwal1 = JSON.parse(j1Saved);
-                jadwal1.sudahDieksekusi = false; // Reset status eksekusi harian
-                document.getElementById('input-jadwal1').value = jadwal1.waktu;
-                document.getElementById('durasi-jadwal1').value = jadwal1.durasi;
-                updateBadgeJadwal(1, true, jadwal1.waktu);
-            }
-            if (j2Saved) {
-                jadwal2 = JSON.parse(j2Saved);
-                jadwal2.sudahDieksekusi = false;
-                document.getElementById('input-jadwal2').value = jadwal2.waktu;
-                document.getElementById('durasi-jadwal2').value = jadwal2.durasi;
-                updateBadgeJadwal(2, true, jadwal2.waktu);
+        function toggleStatusJadwal(id) {
+            const index = daftarJadwal.findIndex(j => j.id === id);
+            if (index !== -1) {
+                daftarJadwal[index].statusAktif = !daftarJadwal[index].statusAktif;
+                daftarJadwal[index].sudahTerpancing = false; 
+                simpanJadwalKeStorage();
             }
         }
 
-        // Logika Inti: Fungsi Pengendali Buka - Tunda - Tutup Katup Servo lewat V0 murni
+        function hapusJadwal(id) {
+            if (confirm("Hapus jadwal pakan ini?")) {
+                daftarJadwal = daftarJadwal.filter(j => j.id !== id);
+                simpanJadwalKeStorage();
+            }
+        }
+
+        function renderDaftarJadwalKeLayar() {
+            const container = document.getElementById('container-daftar-jadwal');
+            if (daftarJadwal.length === 0) {
+                container.innerHTML = `<div class="text-center text-sm text-slate-500 py-6 border border-dashed border-slate-700/60 rounded-xl">Belum ada jadwal pakan otomatis.</div>`;
+                return;
+            }
+
+            let htmlTeks = "";
+            daftarJadwal.forEach(j => {
+                const isChecked = j.statusAktif ? 'checked' : '';
+                const styleTeksRedup = j.statusAktif ? 'text-white' : 'text-slate-500 line-through';
+                
+                htmlTeks += `
+                    <div class="flex items-center justify-between bg-slate-900/50 border border-slate-700/60 p-4 rounded-xl shadow-sm transition hover:bg-slate-900 duration-200">
+                        <div class="flex items-center gap-6">
+                            <div class="text-2xl font-mono font-bold tracking-wider ${styleTeksRedup}">${j.waktu}</div>
+                            <div class="text-xs text-slate-400 font-medium">Durasi: <span class="text-teal-400 font-bold font-mono">${j.durasi}</span> detik</div>
+                        </div>
+                        <div class="flex items-center gap-4">
+                            <label class="relative inline-flex items-center cursor-pointer select-none">
+                                <input type="checkbox" class="sr-only peer" ${isChecked} onchange="toggleStatusJadwal(${j.id})">
+                                <div class="w-11 h-6 bg-slate-700 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-teal-400"></div>
+                            </label>
+                            <button onclick="hapusJadwal(${j.id})" class="text-slate-500 hover:text-rose-500 transition text-sm">
+                                <i class="fa-solid fa-xmark"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+            container.innerHTML = htmlTeks;
+        }
+
+        // --- EKSEKUSI PERINTAH ROBOTIK VIA V0 ---
         async function eksekusiPakarServo(durasiDetik, sumber) {
             const btn = document.getElementById('btn-servo');
             if (sumber === "Manual") {
                 btn.disabled = true;
-                btn.innerHTML = '<i class="fa-solid fa-circle-notch animate-spin"></i> Memproses Alat...';
+                btn.innerHTML = '<i class="fa-solid fa-circle-notch animate-spin"></i> Memproses...';
             }
 
-            console.log(`[LOG] Memicu pakan dari ${sumber} selama ${durasiDetik} detik.`);
-
             try {
-                // 1. Kirim sinyal 1 ke V0 untuk MEMBUKA katup servo otomatis
+                // 1. Kirim V0=1 untuk BUKA servo + Bunyikan Buzzer
                 await fetch(`${BLYNK_URL}/update?token=${BLYNK_TOKEN}&V0=1`);
                 
-                // Menahan katup tetap menganga sesuai durasi detik dari web
+                // Tahan selama durasi detik yang diinginkan
                 await new Promise(resolve => setTimeout(resolve, durasiDetik * 1000));
                 
-                // 2. Kirim sinyal 0 ke V0 untuk MENUTUP kembali katup servo otomatis
+                // 2. Kirim V0=0 untuk TUTUP servo rapat-rapat
                 await fetch(`${BLYNK_URL}/update?token=${BLYNK_TOKEN}&V0=0`);
                 
-                if (sumber === "Manual") alert("Pakan manual sukses dijatuhkan!");
+                if (sumber === "Manual") alert("Pakan manual berhasil dijatuhkan!");
             } catch (error) {
-                console.error("Gagal mengontrol servo via web:", error);
-                if (sumber === "Manual") alert("Koneksi terganggu. Gagal menggerakkan alat.");
+                if (sumber === "Manual") alert("Koneksi bermasalah. Gagal mengontrol alat.");
             } finally {
                 if (sumber === "Manual") {
                     btn.disabled = false;
@@ -292,38 +293,29 @@
             }
         }
 
-        // Fungsi Background Checker Jam Dinding (Berjalan otomatis setiap 1 detik)
-        function rukunCekWaktuPakan() {
+        // Background Checker Jam Dinding (Cek kecocokan waktu tiap detik)
+        function backgroundTimeChecker() {
             const sekarang = new Date();
             const jamMenitSekarang = sekarang.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
-            const detikSekarang = sekarang.getSeconds();
+            const detikSekarang = toggleStatusJadwal.getSeconds;
 
-            // Reset status pemicu otomatis harian saat tengah malam (pukul 00:00) agar jadwal besok bisa terpicu lagi
-            if (jamMenitSekarang === "00:00" && detikSekarang === 0) {
-                jadwal1.sudahDieksekusi = false;
-                jadwal2.sudahDieksekusi = false;
+            if (jamMenitSekarang === "00:00" && sekarang.getSeconds() === 0) {
+                daftarJadwal.forEach(j => j.sudahTerpancing = false);
             }
 
-            // Validasi Pemicu Jadwal 1
-            if (jadwal1.waktu && jamMenitSekarang === jadwal1.waktu && !jadwal1.sudahDieksekusi) {
-                jadwal1.sudahDieksekusi = true;
-                eksekusiPakarServo(jadwal1.durasi, "Otomatis Jadwal 1");
-            }
-
-            // Validasi Pemicu Jadwal 2
-            if (jadwal2.waktu && jamMenitSekarang === jadwal2.waktu && !jadwal2.sudahDieksekusi) {
-                jadwal2.sudahDieksekusi = true;
-                eksekusiPakarServo(jadwal2.durasi, "Otomatis Jadwal 2");
-            }
+            daftarJadwal.forEach(j => {
+                if (j.statusAktif && j.waktu === jamMenitSekarang && !j.sudahTerpancing) {
+                    j.sudahTerpancing = true; 
+                    eksekusiPakarServo(j.durasi, `Jadwal Otomatis ${j.waktu}`);
+                }
+            });
         }
 
-        // Jalankan seluruh interval looping background sistem
-        setInterval(fetchBlynkData, 3000); // Tarik data sensor tiap 3 detik
-        setInterval(rukunCekWaktuPakan, 1000); // Cek ketepatan jam dinding tiap 1 detik
+        setInterval(fetchBlynkData, 3000);
+        setInterval(backgroundTimeChecker, 1000);
         
-        // Eksekusi pemuatan fungsi di awal muat halaman web
         fetchBlynkData();
-        loadSavedData();
+        loadJadwalDariStorage();
     </script>
 </body>
 </html>
