@@ -28,7 +28,7 @@
             
             <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-xl flex items-center justify-between transition hover:border-teal-500/50 duration-300">
                 <div>
-                    <p class="text-slate-400 text-xs font-semibold uppercase tracking-wider">Sisa Volume Pakan</p>
+                    <p class="text-slate-400 text-xs font-semibold uppercase tracking-wider">Kapasitas Sisa Pakan</p>
                     <h3 id="val-volume" class="text-4xl font-black mt-2 text-teal-400">0%</h3>
                 </div>
                 <div class="bg-teal-500/10 p-4 rounded-xl border border-teal-500/20 text-teal-400">
@@ -38,11 +38,11 @@
 
             <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-xl flex items-center justify-between transition hover:border-blue-500/50 duration-300">
                 <div>
-                    <p class="text-slate-400 text-xs font-semibold uppercase tracking-wider">Kelembapan Wadah</p>
-                    <h3 id="val-kelembapan" class="text-4xl font-black mt-2 text-blue-400">0%</h3>
+                    <p class="text-slate-400 text-xs font-semibold uppercase tracking-wider">Suhu Sekitar Wadah</p>
+                    <h3 id="val-kelembapan" class="text-4xl font-black mt-2 text-blue-400">0°C</h3>
                 </div>
                 <div class="bg-blue-500/10 p-4 rounded-xl border border-blue-500/20 text-blue-400">
-                    <i class="fa-solid fa-droplet text-3xl"></i>
+                    <i class="fa-solid fa-temperature-half text-3xl"></i>
                 </div>
             </div>
 
@@ -70,30 +70,30 @@
     </main>
 
     <script>
-        // ================= KONTROL UTAMA AMBIL DARI BLYNK =================
-        const BLYNK_TOKEN = "M9tF9T0A8oG40ZARYeRdMbiZdQ2-5pAO"; // Token Anda berhasil dimasukkan di sini
-        const BLYNK_URL = "https://blynk.cloud/external/api"; // URL Universal Blynk Cloud
+        // Config Utama Sinkronisasi Token Blynk Anda
+        const BLYNK_TOKEN = "M9tF9T0A8oG40ZARYeRdMbiZdQ2-5pAO"; 
+        const BLYNK_URL = "https://blynk.cloud/external/api"; 
 
         // Inisialisasi Grafik Menggunakan Chart.js
         const ctx = document.getElementById('iotChart').getContext('2d');
         const iotChart = new Chart(ctx, {
             type: 'line',
             data: {
-                labels: [], // Menyimpan data waktu (Jam:Menit:Detik)
+                labels: [], 
                 datasets: [
                     {
-                        label: 'Volume Pakan (%)',
+                        label: 'Sisa Pakan (%)',
                         data: [],
-                        borderColor: '#2dd4bf', // Teal
+                        borderColor: '#2dd4bf', 
                         backgroundColor: 'rgba(45, 212, 191, 0.05)',
                         borderWidth: 3,
                         tension: 0.3,
                         fill: true
                     },
                     {
-                        label: 'Kelembapan Wadah (%)',
+                        label: 'Suhu Wadah (°C)',
                         data: [],
-                        borderColor: '#60a5fa', // Blue
+                        borderColor: '#60a5fa', 
                         backgroundColor: 'rgba(96, 165, 250, 0.05)',
                         borderWidth: 3,
                         tension: 0.3,
@@ -124,80 +124,86 @@
             }
         });
 
-        // Fungsi Ambil Data Sensor (V1 & V2) secara Real-Time via API Blynk
+        // Fungsi Ambil Data Sensor (V1 Suhu & V3 Jarak) secara Real-Time via API Blynk
         async function fetchBlynkData() {
             try {
                 // Request paralel ke Blynk Cloud
-                const [resKelembapan, resVolume] = await Promise.all([
+                const [resSuhu, resJarak] = await Promise.all([
                     fetch(`${BLYNK_URL}/get?token=${BLYNK_TOKEN}&V1`),
-                    fetch(`${BLYNK_URL}/get?token=${BLYNK_TOKEN}&V2`)
+                    fetch(`${BLYNK_URL}/get?token=${BLYNK_TOKEN}&V3`)
                 ]);
                 
-                const kelembapan = parseFloat(await resKelembapan.text());
-                const volume = parseInt(await resVolume.text());
+                const suhuVal = parseFloat(await resSuhu.text());
+                const jarakRaw = parseFloat(await resJarak.text());
 
-                // Validasi data dan update element teks di halaman web
-                if (!isNaN(kelembapan)) document.getElementById('val-kelembapan').innerText = kelembapan.toFixed(1) + "%";
-                if (!isNaN(volume)) document.getElementById('val-volume').innerText = volume + "%";
+                // Mengonversi jarak cm (V3) menjadi bentuk persentase kapasitas wadah pakan
+                // Asumsi: Jarak sensor ke dasar wadah kosong = 30cm, wadah penuh = 3cm
+                const tinggiMaksimalWadah = 30; 
+                let sisaPakanPersen = ((tinggiMaksimalWadah - jarakRaw) / tinggiMaksimalWadah) * 100;
+                
+                // Pembatasan logika matematika persentase agar selalu di range 0 - 100%
+                if (sisaPakanPersen > 100) sisaPakanPersen = 100;
+                if (sisaPakanPersen < 0 || isNaN(sisaPakanPersen)) sisaPakanPersen = 0;
 
-                // Dapatkan penanda waktu lokal saat ini
+                // Tampilkan data teks ke Web
+                if (!isNaN(suhuVal)) document.getElementById('val-kelembapan').innerText = suhuVal.toFixed(1) + "°C";
+                document.getElementById('val-volume').innerText = Math.round(sisaPakanPersen) + "%";
+
+                // Dapatkan waktu lokal saat ini (Jam:Menit:Detik)
                 const waktuSekarang = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
                 
-                // Batasi jumlah titik data di grafik (Maksimal 8 data terakhir agar tidak menumpuk di HP)
+                // Batasi jumlah titik grafik maksimal 8 data terakhir agar rapi di layar HP
                 if (iotChart.data.labels.length > 8) { 
                     iotChart.data.labels.shift();
                     iotChart.data.datasets[0].data.shift();
                     iotChart.data.datasets[1].data.shift();
                 }
 
-                // Tambahkan data baru ke dalam grafik
+                // Masukkan data baru ke bagan grafik
                 iotChart.data.labels.push(waktuSekarang);
-                iotChart.data.datasets[0].data.push(volume);
-                iotChart.data.datasets[1].data.push(kelembapan);
+                iotChart.data.datasets[0].data.push(Math.round(sisaPakanPersen));
+                iotChart.data.datasets[1].data.push(suhuVal || 0);
                 iotChart.update();
 
-                // Perbarui status koneksi menjadi hijau (Aktif)
+                // Set status bar menjadi hijau (Berhasil Sinkron)
                 document.getElementById('status-koneksi').innerHTML = '<i class="fa-solid fa-circle text-xs mr-1 animate-pulse"></i> Berhasil Sinkron';
                 document.getElementById('status-koneksi').className = "text-sm bg-emerald-500/20 text-emerald-400 px-3 py-1 rounded-full border border-emerald-500/30 font-medium";
 
             } catch (error) {
-                console.error("Gagal mengambil data Blynk API:", error);
-                // Perbarui status koneksi jika gagal terhubung ke internet/Blynk
+                console.error("Gagal sinkronisasi data Blynk:", error);
                 document.getElementById('status-koneksi').innerHTML = '<i class="fa-solid fa-circle-exclamation text-xs mr-1"></i> Putus Koneksi';
                 document.getElementById('status-koneksi').className = "text-sm bg-rose-500/20 text-rose-400 px-3 py-1 rounded-full border border-rose-500/30 font-medium";
             }
         }
 
-        // Fungsi Kirim Perintah ke Virtual Pin V3 (Menggerakkan Servo)
+        // Fungsi Otomatisasi Tombol Aksi Pemberian Pakan (Menembak ke V0 manual_feed)
         async function beriPakan() {
             const btn = document.getElementById('btn-servo');
             btn.disabled = true;
             btn.innerHTML = '<i class="fa-solid fa-circle-notch animate-spin"></i> Memproses Alat...';
 
             try {
-                // Mengirim perintah nilai 1 ke Virtual Pin V3
-                await fetch(`${BLYNK_URL}/update?token=${BLYNK_TOKEN}&V3=1`);
+                // 1. Kirim sinyal 1 ke V0 untuk MEMBUKA katup servo otomatis
+                await fetch(`${BLYNK_URL}/update?token=${BLYNK_TOKEN}&V0=1`);
                 
-                // Alert konfirmasi sukses
-                alert("Perintah sukses dikirim! Katup pakan terbuka.");
+                // Beri waktu tunda selama 2 detik untuk proses menjatuhkan pakan
+                await new Promise(resolve => setTimeout(resolve, 2000));
                 
-                // Kunci tombol selama 3 detik untuk memberi jeda proses mekanis servo menutup kembali
-                setTimeout(() => {
-                    btn.disabled = false;
-                    btn.innerHTML = '<i class="fa-solid fa-utensils"></i> Beri Pakan Sekarang';
-                }, 3000);
-
+                // 2. Kirim sinyal 0 ke V0 untuk MENUTUP kembali katup servo otomatis
+                await fetch(`${BLYNK_URL}/update?token=${BLYNK_TOKEN}&V0=0`);
+                
+                alert("Perintah Terkirim! Pakan berhasil dijatuhkan.");
             } catch (error) {
-                alert("Gagal mengirim sinyal kontrol ke alat. Coba cek koneksi internet.");
+                alert("Gagal terhubung dengan alat. Periksa koneksi internet.");
+            } finally {
                 btn.disabled = false;
                 btn.innerHTML = '<i class="fa-solid fa-utensils"></i> Beri Pakan Sekarang';
             }
         }
 
-        // Atur agar fungsi penarik data berjalan otomatis setiap 3 detik
+        // Jalankan siklus monitoring penarikan data berkala tiap 3 detik
         setInterval(fetchBlynkData, 3000);
-        // Jalankan sekali di awal saat halaman web pertama kali dimuat
-        fetchBlynkData();
+        fetchBlynkData(); // Eksekusi pertama kali saat halaman dibuka
     </script>
 </body>
 </html>
